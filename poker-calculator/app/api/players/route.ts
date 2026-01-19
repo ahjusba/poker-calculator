@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createPlayer, getAllPlayers, getPlayerByName } from '@/lib/players';
+import { createPlayer, getPlayerByName, getAllPlayerStats } from '@/lib/players';
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,8 +31,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create the player with empty arrays for nicknames and device_ids, 0 net_winnings, and 0 sessions
-    const player = await createPlayer(trimmedName, [], [], 0, 0);
+    // Create the player
+    const player = await createPlayer(trimmedName);
 
     return NextResponse.json({
       success: true,
@@ -49,7 +49,8 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    const players = await getAllPlayers();
+    // Return players with calculated stats
+    const players = await getAllPlayerStats();
     
     return NextResponse.json({
       success: true,

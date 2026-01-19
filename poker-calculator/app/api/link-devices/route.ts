@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { addDeviceIdToPlayer } from '@/lib/players';
+import { linkDeviceToPlayer } from '@/lib/players';
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      await addDeviceIdToPlayer(playerId, deviceId);
+      await linkDeviceToPlayer(deviceId, playerId);
     }
 
     return NextResponse.json({

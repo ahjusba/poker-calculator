@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPlayerByDeviceId, getAllPlayers, incrementSessions, updateNetWinnings, addNicknameToPlayer } from '@/lib/players';
-import { sessionExists, createSession } from '@/lib/sessions';
+import { getPlayerByDeviceId, getAllPlayers, addNicknameToPlayer } from '@/lib/players';
+import { sessionExists, createSession, createSessionParticipant } from '@/lib/sessions';
 
 // Disable SSL verification for development (remove in production)
 if (process.env.NODE_ENV === 'development') {
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     }
 
     // All device IDs are known, process the ledger
-    await processLedger(sessionId, ledgerData);
+    await processLedger(sessionId, url, ledgerData);
 
     // Calculate and format payout string
     const payoutString = await calculatePayout(ledgerData);
@@ -134,14 +134,11 @@ async function checkForUnknownDeviceIds(ledgerData: LedgerData) {
   return unknownDeviceIds;
 }
 
-async function processLedger(sessionId: string, ledgerData: LedgerData) {
-  // Step 1: Add the session to the database
-  await createSession(sessionId);
+async function processLedger(sessionId: string, url: string, ledgerData: LedgerData) {
+  // Step 1: Create the session with full ledger data
+  await createSession(sessionId, url, ledgerData);
 
-  // Track which players have already been counted (to avoid counting same player multiple times)
-  const processedPlayerIds = new Set<number>();
-
-  // Step 2, 3, 4: Process each device ID in the ledger
+  // Step 2-4: Process each device ID and create session participants
   for (const [deviceId, playerInfo] of Object.entries(ledgerData.playersInfos)) {
     // Get the player associated with this device ID
     const player = await getPlayerByDeviceId(deviceId);
@@ -152,23 +149,22 @@ async function processLedger(sessionId: string, ledgerData: LedgerData) {
       continue;
     }
 
-    // Step 2: Increment sessions count (only once per player, even if they have multiple device IDs)
-    if (!processedPlayerIds.has(player.id)) {
-      await incrementSessions(player.id);
-      processedPlayerIds.add(player.id);
-    }
+    // Create session participant record
+    const nickname = playerInfo.names[0] || 'Unknown';
+    await createSessionParticipant(
+      sessionId,
+      deviceId,
+      player.id,
+      nickname,
+      playerInfo.net / 100, // Convert cents to dollars
+      playerInfo.buyInSum / 100,
+      playerInfo.buyOutSum / 100,
+      playerInfo.inGame / 100
+    );
 
-    // Step 3: Update net winnings
-    // The 'net' field is in cents, so we need to convert to dollars
-    const netAmount = playerInfo.net / 100;
-    await updateNetWinnings(player.id, netAmount);
-
-    // Step 4: Add all nicknames used in this session
-    for (const nickname of playerInfo.names) {
-      // Check if nickname already exists for this player
-      if (!player.nicknames.includes(nickname)) {
-        await addNicknameToPlayer(player.id, nickname);
-      }
+    // Add all nicknames used in this session
+    for (const nick of playerInfo.names) {
+      await addNicknameToPlayer(player.id, nick);
     }
   }
 }
