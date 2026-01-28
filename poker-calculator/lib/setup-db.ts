@@ -122,7 +122,7 @@ export async function setupDatabase() {
       'Aleksi K.',
       'Janne P.',
       'Lasse',
-      'kake'
+      'Kake'
     ];
 
     for (const name of playerNames) {
