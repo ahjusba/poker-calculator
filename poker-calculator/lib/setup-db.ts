@@ -2,14 +2,11 @@ import { sql } from './db';
 
 export async function setupDatabase() {
   try {
-    // Drop existing tables in correct order (child tables first)
+    // Drop only session-related tables
     await sql`DROP TABLE IF EXISTS session_participants CASCADE`;
     await sql`DROP TABLE IF EXISTS sessions CASCADE`;
-    await sql`DROP TABLE IF EXISTS nicknames CASCADE`;
-    await sql`DROP TABLE IF EXISTS device_ids CASCADE`;
-    await sql`DROP TABLE IF EXISTS players CASCADE`;
 
-    // Create players table
+    // Create players table (if not exists)
     await sql`
       CREATE TABLE IF NOT EXISTS players (
         id SERIAL PRIMARY KEY,
@@ -18,7 +15,7 @@ export async function setupDatabase() {
       )
     `;
 
-    // Create device_ids table
+    // Create device_ids table (if not exists)
     await sql`
       CREATE TABLE IF NOT EXISTS device_ids (
         id SERIAL PRIMARY KEY,
@@ -28,7 +25,7 @@ export async function setupDatabase() {
       )
     `;
 
-    // Create nicknames table
+    // Create nicknames table (if not exists)
     await sql`
       CREATE TABLE IF NOT EXISTS nicknames (
         id SERIAL PRIMARY KEY,

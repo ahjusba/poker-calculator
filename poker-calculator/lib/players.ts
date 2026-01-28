@@ -123,22 +123,37 @@ export async function getPlayerStats(playerId: number): Promise<PlayerStats | un
     SELECT 
       p.id,
       p.player_name,
-      COUNT(DISTINCT sp.session_id)::int as sessions,
-      COALESCE(SUM(sp.net_amount), 0) as net_winnings,
-      COALESCE(
-        ARRAY_AGG(DISTINCT n.nickname) FILTER (WHERE n.nickname IS NOT NULL),
-        '{}'
-      ) as nicknames,
-      COALESCE(
-        ARRAY_AGG(DISTINCT d.device_id) FILTER (WHERE d.device_id IS NOT NULL),
-        '{}'
-      ) as device_ids
+      COALESCE(stats.sessions, 0)::int as sessions,
+      COALESCE(stats.net_winnings, 0) as net_winnings,
+      COALESCE(nicks.nicknames, '{}') as nicknames,
+      COALESCE(devs.device_ids, '{}') as device_ids
     FROM players p
-    LEFT JOIN session_participants sp ON sp.player_id = p.id
-    LEFT JOIN nicknames n ON n.player_id = p.id
-    LEFT JOIN device_ids d ON d.player_id = p.id
+    LEFT JOIN (
+      SELECT 
+        player_id,
+        COUNT(DISTINCT session_id) as sessions,
+        SUM(net_amount) as net_winnings
+      FROM session_participants
+      WHERE player_id = ${playerId}
+      GROUP BY player_id
+    ) stats ON stats.player_id = p.id
+    LEFT JOIN (
+      SELECT 
+        player_id,
+        ARRAY_AGG(DISTINCT nickname) as nicknames
+      FROM nicknames
+      WHERE player_id = ${playerId}
+      GROUP BY player_id
+    ) nicks ON nicks.player_id = p.id
+    LEFT JOIN (
+      SELECT 
+        player_id,
+        ARRAY_AGG(DISTINCT device_id) as device_ids
+      FROM device_ids
+      WHERE player_id = ${playerId}
+      GROUP BY player_id
+    ) devs ON devs.player_id = p.id
     WHERE p.id = ${playerId}
-    GROUP BY p.id, p.player_name
   `;
   return result[0] as PlayerStats | undefined;
 }
@@ -148,21 +163,33 @@ export async function getAllPlayerStats(): Promise<PlayerStats[]> {
     SELECT 
       p.id,
       p.player_name,
-      COUNT(DISTINCT sp.session_id)::int as sessions,
-      COALESCE(SUM(sp.net_amount), 0) as net_winnings,
-      COALESCE(
-        ARRAY_AGG(DISTINCT n.nickname) FILTER (WHERE n.nickname IS NOT NULL),
-        '{}'
-      ) as nicknames,
-      COALESCE(
-        ARRAY_AGG(DISTINCT d.device_id) FILTER (WHERE d.device_id IS NOT NULL),
-        '{}'
-      ) as device_ids
+      COALESCE(stats.sessions, 0)::int as sessions,
+      COALESCE(stats.net_winnings, 0) as net_winnings,
+      COALESCE(nicks.nicknames, '{}') as nicknames,
+      COALESCE(devs.device_ids, '{}') as device_ids
     FROM players p
-    LEFT JOIN session_participants sp ON sp.player_id = p.id
-    LEFT JOIN nicknames n ON n.player_id = p.id
-    LEFT JOIN device_ids d ON d.player_id = p.id
-    GROUP BY p.id, p.player_name
+    LEFT JOIN (
+      SELECT 
+        player_id,
+        COUNT(DISTINCT session_id) as sessions,
+        SUM(net_amount) as net_winnings
+      FROM session_participants
+      GROUP BY player_id
+    ) stats ON stats.player_id = p.id
+    LEFT JOIN (
+      SELECT 
+        player_id,
+        ARRAY_AGG(DISTINCT nickname) as nicknames
+      FROM nicknames
+      GROUP BY player_id
+    ) nicks ON nicks.player_id = p.id
+    LEFT JOIN (
+      SELECT 
+        player_id,
+        ARRAY_AGG(DISTINCT device_id) as device_ids
+      FROM device_ids
+      GROUP BY player_id
+    ) devs ON devs.player_id = p.id
     ORDER BY net_winnings DESC
   `;
   return result as PlayerStats[];

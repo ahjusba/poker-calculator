@@ -1,7 +1,22 @@
 import { NextResponse } from 'next/server';
 import { setupDatabase } from '@/lib/setup-db';
+import { headers } from 'next/headers';
 
 export async function GET() {
+  // Only allow calls from localhost
+  const headersList = await headers();
+  const host = headersList.get('host');
+  
+  if (!host || (!host.startsWith('localhost') && !host.startsWith('127.0.0.1'))) {
+    return NextResponse.json(
+      { 
+        success: false,
+        error: 'Forbidden: This endpoint can only be accessed from localhost'
+      },
+      { status: 403 }
+    );
+  }
+
   try {
     await setupDatabase();
     

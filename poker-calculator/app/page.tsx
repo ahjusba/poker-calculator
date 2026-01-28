@@ -34,6 +34,33 @@ export default function HomePage() {
     }
   };
 
+  const submitLedger = async () => {
+    const response = await fetch('/api/ledger', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: inputValue })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to process ledger');
+    }
+
+    if (data.requiresLinking) {
+      // Unknown device IDs found, show linking UI
+      setUnknownDevices(data.unknownDeviceIds);
+      // Sort existing players alphabetically by name
+      const sortedPlayers = data.existingPlayers.sort((a: ExistingPlayer, b: ExistingPlayer) => 
+        a.name.localeCompare(b.name)
+      );
+      setExistingPlayers(sortedPlayers);
+    } else {
+      // Success, show payout
+      setPayout(data.payout);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!isValid) return;
 
@@ -43,30 +70,7 @@ export default function HomePage() {
     setDeviceLinks({});
     
     try {
-      const response = await fetch('/api/ledger', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: inputValue })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to process ledger');
-      }
-
-      if (data.requiresLinking) {
-        // Unknown device IDs found, show linking UI
-        setUnknownDevices(data.unknownDeviceIds);
-        // Sort existing players alphabetically by name
-        const sortedPlayers = data.existingPlayers.sort((a: ExistingPlayer, b: ExistingPlayer) => 
-          a.name.localeCompare(b.name)
-        );
-        setExistingPlayers(sortedPlayers);
-      } else {
-        // Success, show payout
-        setPayout(data.payout);
-      }
+      await submitLedger();
     } catch (error) {
       console.error('Submit failed:', error);
       alert(error instanceof Error ? error.message : 'Failed to process ledger');
@@ -103,13 +107,15 @@ export default function HomePage() {
         throw new Error(data.error || 'Failed to link devices');
       }
 
-      // Clear linking UI and show success message
+      // Clear linking UI
       setUnknownDevices([]);
       setDeviceLinks({});
-      alert('Devices linked successfully! Please submit the ledger again.');
+
+      // Automatically resubmit the ledger
+      await submitLedger();
     } catch (error) {
-      console.error('Linking failed:', error);
-      alert(error instanceof Error ? error.message : 'Failed to link devices');
+      console.error('Linking or submission failed:', error);
+      alert(error instanceof Error ? error.message : 'Failed to link devices or process ledger');
     } finally {
       setIsLoading(false);
     }

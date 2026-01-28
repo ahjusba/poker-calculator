@@ -29,6 +29,7 @@ export default function LeaderboardPage() {
       const data = await response.json();
       
       if (data.success) {
+        console.log(data)
         setPlayers(data.players);
       } else {
         setError('Failed to load leaderboard');
