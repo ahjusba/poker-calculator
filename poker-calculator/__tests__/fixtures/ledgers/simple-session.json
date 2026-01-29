@@ -1,0 +1,24 @@
+{
+  "buyInTotal": 4000,
+  "inGameTotal": 0,
+  "buyOutTotal": 4000,
+  "playersInfos": {
+    "device-alice": {
+      "names": ["Alice"],
+      "id": "device-alice",
+      "buyInSum": 2000,
+      "buyOutSum": 3000,
+      "inGame": 0,
+      "net": 1000
+    },
+    "device-bob": {
+      "names": ["Bob"],
+      "id": "device-bob",
+      "buyInSum": 2000,
+      "buyOutSum": 1000,
+      "inGame": 0,
+      "net": -1000
+    }
+  },
+  "gameHasRake": false
+}

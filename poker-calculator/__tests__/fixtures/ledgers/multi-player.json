@@ -1,0 +1,48 @@
+{
+  "buyInTotal": 10000,
+  "inGameTotal": 0,
+  "buyOutTotal": 10000,
+  "playersInfos": {
+    "device-player1": {
+      "names": ["Player1"],
+      "id": "device-player1",
+      "buyInSum": 2000,
+      "buyOutSum": 4000,
+      "inGame": 0,
+      "net": 2000
+    },
+    "device-player2": {
+      "names": ["Player2"],
+      "id": "device-player2",
+      "buyInSum": 2000,
+      "buyOutSum": 2500,
+      "inGame": 0,
+      "net": 500
+    },
+    "device-player3": {
+      "names": ["Player3"],
+      "id": "device-player3",
+      "buyInSum": 2000,
+      "buyOutSum": 1500,
+      "inGame": 0,
+      "net": -500
+    },
+    "device-player4": {
+      "names": ["Player4"],
+      "id": "device-player4",
+      "buyInSum": 2000,
+      "buyOutSum": 1000,
+      "inGame": 0,
+      "net": -1000
+    },
+    "device-player5": {
+      "names": ["Player5"],
+      "id": "device-player5",
+      "buyInSum": 2000,
+      "buyOutSum": 1000,
+      "inGame": 0,
+      "net": -1000
+    }
+  },
+  "gameHasRake": false
+}

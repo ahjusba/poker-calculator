@@ -36,7 +36,7 @@ export interface PlayerStats {
 export async function createPlayer(playerName: string): Promise<Player> {
   const result = await sql`
     INSERT INTO players (player_name)
-    VALUES (${playerName})
+    VALUES (${playerName.trim()})
     RETURNING *
   `;
   return result[0] as Player;
@@ -124,7 +124,7 @@ export async function getPlayerStats(playerId: number): Promise<PlayerStats | un
       p.id,
       p.player_name,
       COALESCE(stats.sessions, 0)::int as sessions,
-      COALESCE(stats.net_winnings, 0) as net_winnings,
+      COALESCE(stats.net_winnings, 0)::numeric as net_winnings,
       COALESCE(nicks.nicknames, '{}') as nicknames,
       COALESCE(devs.device_ids, '{}') as device_ids
     FROM players p
@@ -155,7 +155,16 @@ export async function getPlayerStats(playerId: number): Promise<PlayerStats | un
     ) devs ON devs.player_id = p.id
     WHERE p.id = ${playerId}
   `;
-  return result[0] as PlayerStats | undefined;
+  
+  // Convert net_winnings from string to number (PostgreSQL NUMERIC returns strings)
+  if (result[0]) {
+    return {
+      ...result[0],
+      net_winnings: parseFloat(result[0].net_winnings as unknown as string) || 0
+    } as PlayerStats;
+  }
+  
+  return undefined;
 }
 
 export async function getAllPlayerStats(): Promise<PlayerStats[]> {
@@ -164,7 +173,7 @@ export async function getAllPlayerStats(): Promise<PlayerStats[]> {
       p.id,
       p.player_name,
       COALESCE(stats.sessions, 0)::int as sessions,
-      COALESCE(stats.net_winnings, 0) as net_winnings,
+      COALESCE(stats.net_winnings, 0)::numeric as net_winnings,
       COALESCE(nicks.nicknames, '{}') as nicknames,
       COALESCE(devs.device_ids, '{}') as device_ids
     FROM players p
@@ -192,5 +201,10 @@ export async function getAllPlayerStats(): Promise<PlayerStats[]> {
     ) devs ON devs.player_id = p.id
     ORDER BY net_winnings DESC
   `;
-  return result as PlayerStats[];
+  
+  // Convert net_winnings from string to number (PostgreSQL NUMERIC returns strings)
+  return result.map(row => ({
+    ...row,
+    net_winnings: parseFloat(row.net_winnings as unknown as string) || 0
+  })) as PlayerStats[];
 }
