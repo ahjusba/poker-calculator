@@ -38,6 +38,18 @@ export async function createSession(sessionId: string, url: string, ledgerData: 
   return result[0] as Session;
 }
 
+export async function updateSession(sessionId: string, url: string, ledgerData: unknown): Promise<Session | undefined> {
+  const result = await sql`
+    UPDATE sessions 
+    SET url = ${url}, 
+        ledger_data = ${JSON.stringify(ledgerData)},
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = ${sessionId}
+    RETURNING *
+  `;
+  return result[0] as Session | undefined;
+}
+
 export async function getSessionById(sessionId: string): Promise<Session | undefined> {
   const result = await sql`
     SELECT * FROM sessions WHERE id = ${sessionId}
