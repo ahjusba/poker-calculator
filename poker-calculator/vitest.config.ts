@@ -8,6 +8,9 @@ export default defineConfig({
     environment: 'node',
     setupFiles: ['./__tests__/setup.ts'],
     globals: true,
+    // Run integration tests sequentially to avoid database conflicts
+    // Unit tests can still run in parallel
+    fileParallelism: false,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

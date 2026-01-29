@@ -131,7 +131,7 @@ describe('Ledger Utils - Integration Tests', () => {
       const deviceIds = Object.keys(ledgerData.playersInfos);
       for (const deviceId of deviceIds) {
         const playerInfo = ledgerData.playersInfos[deviceId];
-        const player = await createPlayer(playerInfo.names[0]);
+        const player = await createPlayer(playerInfo.names[0]); //Note: we are using Nicknames as names
         await linkDeviceToPlayer(deviceId, player.id);
       }
 
@@ -146,7 +146,7 @@ describe('Ledger Utils - Integration Tests', () => {
       expect(payoutString).toContain('→');
     });
 
-    it('should have correct format: "PlayerName €Amount → PlayerName"', async () => {
+    it('should have correct format: "PlayerName Amount€ → PlayerName"', async () => {
       const ledgerData = sessions_data[0] as unknown as LedgerData;
       
       // Link devices
@@ -160,9 +160,13 @@ describe('Ledger Utils - Integration Tests', () => {
       const payoutString = await calculatePayout(ledgerData);
       const lines = payoutString.trim().split('\n');
       
-      // Each line should match the format
-      const payoutRegex = /^.+ €\d+\.\d{2} → .+$/;
-      lines.forEach(line => {
+      // First line should be the header
+      expect(lines[0]).toBe('Payouts powered by Perkins-App:');
+      
+      // Each transaction line (after header) should match the format "PlayerName Amount€ → PlayerName"
+      const payoutRegex = /^.+ \d+\.\d{2}€ → .+$/;
+      const transactionLines = lines.slice(1); // Skip header
+      transactionLines.forEach(line => {
         expect(line).toMatch(payoutRegex);
       });
     });
@@ -181,15 +185,16 @@ describe('Ledger Utils - Integration Tests', () => {
 
       const payoutString = await calculatePayout(ledgerData);
       const lines = payoutString.trim().split('\n');
+      const transactionLines = lines.slice(1); // Skip header "Payouts powered by Perkins-App:"
       
       // Should have transactions to balance the debts
-      expect(lines.length).toBeGreaterThan(0);
-      expect(lines.length).toBeLessThanOrEqual(4); // At most n-1 transactions for n players
+      expect(transactionLines.length).toBeGreaterThan(0);
+      expect(transactionLines.length).toBeLessThanOrEqual(4); // At most n-1 transactions for n players
       
       // Verify total amounts balance
       let totalPaid = 0;
-      lines.forEach(line => {
-        const match = line.match(/€(\d+\.\d{2})/);
+      transactionLines.forEach(line => {
+        const match = line.match(/(\d+\.\d{2})€/);
         if (match) {
           totalPaid += parseFloat(match[1]) * 100; // Convert to cents
         }
@@ -203,26 +208,65 @@ describe('Ledger Utils - Integration Tests', () => {
       expect(Math.abs(totalPaid - totalWinnings)).toBeLessThan(1); // Allow for rounding
     });
 
-    it('should balance debts correctly for session 2 (simple case)', async () => {
-      const ledgerData = sessions_data[1] as unknown as LedgerData;
-      
-      // Session 2: Lauri P. loses 4000, Akseli wins 4000 (simple 1-to-1 transfer)
-      const deviceIds = Object.keys(ledgerData.playersInfos);
-      for (const deviceId of deviceIds) {
-        const playerInfo = ledgerData.playersInfos[deviceId];
-        const player = await createPlayer(playerInfo.names[0]);
+    it('should balance debts correctly with specific scenario', async () => {
+      // Create custom scenario:
+      // Player 1 wins €11, Player 2 wins €29
+      // Player 3 loses €10, Player 4 loses €30
+      const ledgerData: LedgerData = {
+        buyInTotal: 10000,
+        inGameTotal: 0,
+        buyOutTotal: 10000,
+        gameHasRake: false,
+        playersInfos: {
+          'device-1': {
+            names: ['Player 1'],
+            id: 'device-1',
+            buyInSum: 5000,
+            buyOutSum: 6100, // +1100 cents = €11
+            inGame: 0,
+            net: 1100 // €11 in cents
+          },
+          'device-2': {
+            names: ['Player 2'],
+            id: 'device-2',
+            buyInSum: 5000,
+            buyOutSum: 7900, // +2900 cents = €29
+            inGame: 0,
+            net: 2900 // €29 in cents
+          },
+          'device-3': {
+            names: ['Player 3'],
+            id: 'device-3',
+            buyInSum: 5000,
+            buyOutSum: 4000, // -1000 cents = -€10
+            inGame: 0,
+            net: -1000 // -€10 in cents
+          },
+          'device-4': {
+            names: ['Player 4'],
+            id: 'device-4',
+            buyInSum: 5000,
+            buyOutSum: 2000, // -3000 cents = -€30
+            inGame: 0,
+            net: -3000 // -€30 in cents
+          }
+        }
+      };
+
+      // Create players and link devices
+      for (let i = 1; i <= 4; i++) {
+        const deviceId = `device-${i}`;
+        const player = await createPlayer(`Player ${i}`);
         await linkDeviceToPlayer(deviceId, player.id);
       }
 
       const payoutString = await calculatePayout(ledgerData);
-      const lines = payoutString.trim().split('\n');
       
-      // Should be exactly 1 transaction for 2 players
-      expect(lines.length).toBe(1);
-      expect(payoutString).toContain('Lauri P.');
-      expect(payoutString).toContain('€40.00');
-      // Verify transaction format: "Payer €Amount → Recipient"
-      expect(payoutString).toMatch(/→/);
+      // Expected output:
+      // "Payouts powered by Perkins-App:\nPlayer 4 29.00€ → Player 2\nPlayer 4 1.00€ → Player 1\nPlayer 3 10.00€ → Player 1"
+      const expectedOutput = 'Payouts powered by Perkins-App:\nPlayer 4 29.00€ → Player 2\nPlayer 4 1.00€ → Player 1\nPlayer 3 10.00€ → Player 1';
+      
+      expect(payoutString).toBe(expectedOutput);
     });
 
     it('should minimize number of transactions', async () => {
@@ -236,7 +280,8 @@ describe('Ledger Utils - Integration Tests', () => {
       }
 
       const payoutString = await calculatePayout(ledgerData);
-      const transactions = payoutString.trim().split('\n');
+      const lines = payoutString.trim().split('\n');
+      const transactions = lines.slice(1); // Skip header "Payouts powered by Perkins-App:"
       
       // For n players, optimal payout needs at most n-1 transactions
       const playerCount = Object.keys(ledgerData.playersInfos).length;
@@ -255,10 +300,11 @@ describe('Ledger Utils - Integration Tests', () => {
 
       const payoutString = await calculatePayout(ledgerData);
       const lines = payoutString.trim().split('\n');
+      const transactionLines = lines.slice(1); // Skip header "Payouts powered by Perkins-App:"
       
       // Extract all amounts and verify they're positive
-      lines.forEach(line => {
-        const match = line.match(/€(\d+\.\d{2})/);
+      transactionLines.forEach(line => {
+        const match = line.match(/(\d+\.\d{2})€/);
         if (match) {
           const amount = parseFloat(match[1]);
           expect(amount).toBeGreaterThan(0);
@@ -322,8 +368,8 @@ describe('Ledger Utils - Integration Tests', () => {
 
       const payoutString = await calculatePayout(ledgerData);
       
-      // No transactions needed when everyone won
-      expect(payoutString).toBe('');
+      // No transactions needed when everyone won, only header
+      expect(payoutString).toBe('Payouts powered by Perkins-App:');
     });
 
     it('should handle ledger with only losers', async () => {
@@ -359,8 +405,8 @@ describe('Ledger Utils - Integration Tests', () => {
 
       const payoutString = await calculatePayout(ledgerData);
       
-      // No transactions needed when everyone lost
-      expect(payoutString).toBe('');
+      // No transactions needed when everyone lost, only header
+      expect(payoutString).toBe('Payouts powered by Perkins-App:');
     });
   });
 

@@ -145,6 +145,7 @@ export async function calculatePayout(ledgerData: LedgerData): Promise<string> {
 
   // Calculate transactions
   const transactions: string[] = [];
+  transactions.push('Payouts powered by Perkins-App:');
 
   // Create copies to work with
   const losersCopy = losers.map(l => ({ ...l }));
@@ -164,7 +165,7 @@ export async function calculatePayout(ledgerData: LedgerData): Promise<string> {
     const paymentEuros = (paymentAmount / 100).toFixed(2);
 
     // Add transaction
-    transactions.push(`${loser.name} €${paymentEuros} → ${winner.name}`);
+    transactions.push(`${loser.name} ${paymentEuros}€ → ${winner.name}`);
 
     // Update balances
     loser.amount -= paymentAmount;
