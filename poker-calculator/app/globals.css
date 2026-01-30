@@ -21,7 +21,7 @@
 @layer components {
   .btn-primary {
     @apply px-4 py-2 md:px-6 md:py-3 bg-poker-light-green text-white font-semibold rounded-lg 
-           hover:bg-poker-light-green/90 disabled:bg-poker-sage disabled:cursor-not-allowed 
+           hover:bg-poker-light-green/90 disabled:bg-gray-600 disabled:cursor-not-allowed 
            transition-all shadow-lg text-sm md:text-base;
   }
   

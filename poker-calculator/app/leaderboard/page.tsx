@@ -13,7 +13,10 @@ const formatCurrency = (amount: number) => {
 
 export default async function LeaderboardPage() {
   // Fetch data directly on the server
-  const players = await getAllPlayerStats();
+  const allPlayers = await getAllPlayerStats();
+  
+  // Filter to only show players with at least 1 session
+  const players = allPlayers.filter(player => player.sessions > 0);
 
   return (
     <PageContainer title="🏆 Leaderboard" maxWidth="2xl">
@@ -64,10 +67,6 @@ export default async function LeaderboardPage() {
                 </div>
               </div>
             ))}
-          </div>
-
-          <div className="flex justify-center">
-            <RefreshButton />
           </div>
         </div>
       )}
