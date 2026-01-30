@@ -1,5 +1,5 @@
 import { getAllPlayers } from '@/lib/players';
-import { LedgerSubmitForm } from '../components/forms/ledger-submit-form';
+import { LedgerSubmitForm } from '@/components/forms/ledger-submit-form';
 
 export default async function HomePage() {
   // Pre-load players list on the server for faster device linking

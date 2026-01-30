@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { PageContainer } from '@/components/layout/page-container';
 
 interface UnknownDevice {
   deviceId: string;
@@ -130,68 +131,102 @@ export function LedgerSubmitForm({ existingPlayers }: LedgerSubmitFormProps) {
   };
 
   return (
-    <div>
-      <h1>Submit ledger</h1>
-      
-      <input
-        type="text"
-        value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
-        placeholder="Enter pokernow.club URL"
-      />
-      
-      <button onClick={handlePaste}>
-        Paste
-      </button>
-      
-      <button onClick={handleSubmit} disabled={!isValid || isLoading}>
-        {isLoading ? 'Processing...' : 'Submit'}
-      </button>
-      
-      {showError && (
-        <div>Error: URL must start with &quot;https://www.pokernow.com/games/&quot;</div>
-      )}
-
-      {showLinkingUI && (
-        <div style={{ marginTop: '20px', padding: '20px', border: '1px solid orange', borderRadius: '5px', backgroundColor: '#fff3cd' }}>
-          <h2>Link Unknown Device IDs</h2>
-          <p>The following device IDs need to be linked to players:</p>
+    <PageContainer title="Submit Ledger" maxWidth="lg">
+      <div className="space-y-6">
+        {/* URL Input Card */}
+        <div className="card space-y-4">
+          <input
+            type="text"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            placeholder="Enter PokerNow game URL"
+            className="input-field"
+          />
           
-          {unknownDevices.map(device => (
-            <div key={device.deviceId} style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontWeight: 'bold', minWidth: '150px' }}>{device.nickname}</span>
-              <select
-                value={deviceLinks[device.deviceId] || ''}
-                onChange={(e) => handleDeviceLinkChange(device.deviceId, e.target.value)}
-                style={{ padding: '5px', minWidth: '200px' }}
-              >
-                <option value="">Select a player...</option>
-                {existingPlayers.map(player => (
-                  <option key={player.id} value={player.id}>
-                    {player.name}
-                  </option>
-                ))}
-              </select>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button 
+              onClick={handlePaste}
+              className="btn-secondary flex-1"
+            >
+              📋 Paste
+            </button>
+            
+            <button 
+              onClick={handleSubmit} 
+              disabled={!isValid || isLoading}
+              className="btn-primary flex-1"
+            >
+              {isLoading ? '⏳ Processing...' : '✓ Submit'}
+            </button>
+          </div>
+          
+          {showError && (
+            <div className="p-3 md:p-4 rounded-lg bg-poker-coral/20 border-l-4 border-poker-coral text-white text-sm md:text-base">
+              ⚠️ Error: URL must start with &quot;https://www.pokernow.com/games/&quot;
             </div>
-          ))}
-          
-          <button 
-            onClick={handleLinkDevices} 
-            disabled={!allDevicesLinked || isLoading}
-            style={{ marginTop: '10px' }}
-          >
-            {isLoading ? 'Linking...' : 'Submit Links'}
-          </button>
+          )}
         </div>
-      )}
 
-      {payout && (
-        <div>
-          <h2>Payout</h2>
-          <pre>{payout}</pre>
-          <button onClick={handleCopy}>Copy</button>
-        </div>
-      )}
-    </div>
+        {/* Device Linking Card */}
+        {showLinkingUI && (
+          <div className="card bg-poker-coral/10 border-poker-coral/30">
+            <h2 className="text-xl md:text-2xl font-bold text-poker-coral mb-4">
+              🔗 Link Unknown Device IDs
+            </h2>
+            <p className="text-poker-sage mb-6 text-sm md:text-base">
+              The following device IDs need to be linked to players:
+            </p>
+            
+            <div className="space-y-4">
+              {unknownDevices.map(device => (
+                <div key={device.deviceId} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-white/5 rounded-lg">
+                  <span className="font-bold text-poker-light-green min-w-[150px] text-sm md:text-base">
+                    {device.nickname}
+                  </span>
+                  <select
+                    value={deviceLinks[device.deviceId] || ''}
+                    onChange={(e) => handleDeviceLinkChange(device.deviceId, e.target.value)}
+                    className="flex-1 px-3 py-2 bg-white/10 border-2 border-poker-sage/30 rounded-lg text-white focus:border-poker-light-green focus:ring-2 focus:ring-poker-light-green/20 transition-all outline-none text-sm md:text-base"
+                  >
+                    <option value="">Select a player...</option>
+                    {existingPlayers.map(player => (
+                      <option key={player.id} value={player.id} className="bg-poker-dark-green">
+                        {player.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+            </div>
+            
+            <button 
+              onClick={handleLinkDevices} 
+              disabled={!allDevicesLinked || isLoading}
+              className="btn-secondary w-full mt-6"
+            >
+              {isLoading ? '⏳ Linking...' : '✓ Submit Links'}
+            </button>
+          </div>
+        )}
+
+        {/* Payout Card */}
+        {payout && (
+          <div className="card bg-poker-light-green/10 border-poker-light-green/30">
+            <h2 className="text-xl md:text-2xl font-bold text-poker-light-green mb-4">
+              💰 Payout
+            </h2>
+            <pre className="bg-white/5 p-4 rounded-lg overflow-x-auto text-sm md:text-base font-mono text-white whitespace-pre-wrap">
+              {payout}
+            </pre>
+            <button 
+              onClick={handleCopy}
+              className="btn-primary w-full mt-4"
+            >
+              📋 Copy to Clipboard
+            </button>
+          </div>
+        )}
+      </div>
+    </PageContainer>
   );
 }
