@@ -5,12 +5,18 @@ import { PageContainer } from '@/components/layout/page-container';
 
 export default function AddPlayerPage() {
   const [playerName, setPlayerName] = useState('');
+  const [secret, setSecret] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
 
   const handleSubmit = async () => {
     if (!playerName.trim()) {
       setMessage('Please enter a player name');
+      return;
+    }
+
+    if (secret !== 'kakkosseiska') {
+      setMessage('Invalid secret. Please enter the correct secret to add a player.');
       return;
     }
 
@@ -32,6 +38,7 @@ export default function AddPlayerPage() {
 
       setMessage(`Player "${data.player.player_name}" created successfully!`);
       setPlayerName('');
+      setSecret('');
     } catch (error) {
       console.error('Failed to create player:', error);
       setMessage(error instanceof Error ? error.message : 'Failed to create player');
@@ -52,9 +59,18 @@ export default function AddPlayerPage() {
           onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
         />
         
+        <input
+          type="password"
+          value={secret}
+          onChange={(e) => setSecret(e.target.value)}
+          placeholder="Enter secret"
+          className="input-field"
+          onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+        />
+        
         <button 
           onClick={handleSubmit} 
-          disabled={isLoading || !playerName.trim()}
+          disabled={isLoading || !playerName.trim() || !secret.trim()}
           className="btn-primary w-full"
         >
           {isLoading ? 'Creating...' : 'Create Player'}
