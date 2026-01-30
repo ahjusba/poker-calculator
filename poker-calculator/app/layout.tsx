@@ -1,4 +1,5 @@
 import './globals.css';
+import { BurgerMenu } from '@/components/layout/burger-menu';
 
 export default function RootLayout({
   children,
@@ -7,7 +8,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <BurgerMenu />
+        {children}
+      </body>
     </html>
   )
 }

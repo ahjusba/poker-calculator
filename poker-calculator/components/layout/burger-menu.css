@@ -1,0 +1,94 @@
+/* Burger menu icon styles */
+.bm-burger-button {
+  position: fixed;
+  width: 36px;
+  height: 30px;
+  right: 20px;
+  top: 20px;
+  z-index: 1000;
+}
+
+.bm-burger-bars {
+  background: #43aa8b;
+  border-radius: 2px;
+  height: 4px !important;
+}
+
+.bm-burger-bars-hover {
+  background: #ff6f59;
+}
+
+/* Menu overlay */
+.bm-menu-wrap {
+  position: fixed;
+  height: 100%;
+  top: 0;
+}
+
+.bm-menu {
+  background: #254441;
+  padding: 2.5em 1.5em 0;
+  font-size: 1.15em;
+}
+
+.bm-overlay {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  top: 0;
+  left: 0;
+}
+
+/* Menu items */
+.bm-item-list {
+  color: white;
+  padding: 0.8em;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  margin-bottom: 0.5rem;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.menu-item:hover {
+  background: rgba(67, 170, 139, 0.2);
+  transform: translateX(5px);
+}
+
+.menu-item.active {
+  background: rgba(67, 170, 139, 0.3);
+  border-left: 4px solid #43aa8b;
+}
+
+.menu-icon {
+  font-size: 1.5rem;
+  width: 32px;
+  display: inline-block;
+  text-align: center;
+}
+
+/* Cross button to close */
+.bm-cross-button {
+  height: 30px;
+  width: 30px;
+  right: 20px;
+  top: 20px;
+}
+
+.bm-cross {
+  background: #ff6f59;
+  height: 24px !important;
+  width: 4px !important;
+}
+
+.bm-cross:hover {
+  background: #ef3054;
+}
