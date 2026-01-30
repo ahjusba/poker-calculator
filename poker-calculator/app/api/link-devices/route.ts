@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { linkDeviceToPlayer } from '@/lib/players';
 
 export async function POST(request: NextRequest) {
@@ -26,6 +27,9 @@ export async function POST(request: NextRequest) {
 
       await linkDeviceToPlayer(deviceId, playerId);
     }
+
+    // Revalidate the leaderboard page since device linking may affect future ledger submissions
+    revalidatePath('/leaderboard');
 
     return NextResponse.json({
       success: true,

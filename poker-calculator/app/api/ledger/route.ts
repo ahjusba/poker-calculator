@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { sessionExists } from '@/lib/sessions';
 import { 
   extractSessionId, 
@@ -78,6 +79,9 @@ export async function POST(request: NextRequest) {
 
     // Calculate and format payout string
     const payoutString = await calculatePayout(ledgerData);
+
+    // Revalidate the leaderboard page to show updated data
+    revalidatePath('/leaderboard');
 
     return NextResponse.json({
       success: true,

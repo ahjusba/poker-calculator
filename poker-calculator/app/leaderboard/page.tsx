@@ -2,6 +2,9 @@ import { getAllPlayerStats } from '@/lib/players';
 import { PageContainer } from '@/components/layout/page-container';
 import { RefreshButton } from '@/components/leaderboard/refresh-button';
 
+// Cache this page but allow revalidation via tag
+export const revalidate = 60; // Revalidate at most every 60 seconds as fallback
+
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('fi-FI', {
     style: 'currency',

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { createPlayer, getPlayerByName } from '@/lib/players';
 
 export async function POST(request: NextRequest) {
@@ -33,6 +34,9 @@ export async function POST(request: NextRequest) {
 
     // Create the player
     const player = await createPlayer(trimmedName);
+
+    // Revalidate the homepage so the new player appears in the dropdown
+    revalidatePath('/');
 
     return NextResponse.json({
       success: true,
