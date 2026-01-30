@@ -1,72 +1,17 @@
-'use client';
+import { getAllPlayerStats } from '@/lib/players';
 
-import { useEffect, useState } from 'react';
+const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat('fi-FI', {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(amount);
+};
 
-interface PlayerStats {
-  id: number;
-  player_name: string;
-  sessions: number;
-  net_winnings: number;
-  nicknames: string[];
-  device_ids: string[];
-}
-
-export default function LeaderboardPage() {
-  const [players, setPlayers] = useState<PlayerStats[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchLeaderboard();
-  }, []);
-
-  const fetchLeaderboard = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await fetch('/api/players');
-      const data = await response.json();
-      
-      if (data.success) {
-        console.log(data)
-        setPlayers(data.players);
-      } else {
-        setError('Failed to load leaderboard');
-      }
-    } catch (err) {
-      console.error('Error fetching leaderboard:', err);
-      setError('Failed to load leaderboard');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fi-FI', {
-      style: 'currency',
-      currency: 'EUR',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(amount);
-  };
-
-  if (loading) {
-    return (
-      <div style={{ padding: '20px', textAlign: 'center' }}>
-        <p>Loading leaderboard...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div style={{ padding: '20px', textAlign: 'center', color: 'red' }}>
-        <p>{error}</p>
-        <button onClick={fetchLeaderboard}>Retry</button>
-      </div>
-    );
-  }
+export default async function LeaderboardPage() {
+  // Fetch data directly on the server
+  const players = await getAllPlayerStats();
 
   return (
     <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
@@ -129,22 +74,6 @@ export default function LeaderboardPage() {
           ))}
         </div>
       )}
-
-      <div style={{ marginTop: '20px', textAlign: 'center' }}>
-        <button 
-          onClick={fetchLeaderboard}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#0070f3',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer'
-          }}
-        >
-          Refresh
-        </button>
-      </div>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createPlayer, getPlayerByName, getAllPlayerStats } from '@/lib/players';
+import { createPlayer, getPlayerByName } from '@/lib/players';
 
 export async function POST(request: NextRequest) {
   try {
@@ -42,24 +42,6 @@ export async function POST(request: NextRequest) {
     console.error('Failed to create player:', error);
     return NextResponse.json(
       { error: 'Failed to create player' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function GET() {
-  try {
-    // Return players with calculated stats
-    const players = await getAllPlayerStats();
-    
-    return NextResponse.json({
-      success: true,
-      players
-    });
-  } catch (error) {
-    console.error('Failed to fetch players:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch players' },
       { status: 500 }
     );
   }

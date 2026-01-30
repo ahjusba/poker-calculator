@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllPlayers } from '@/lib/players';
 import { sessionExists } from '@/lib/sessions';
 import { 
   extractSessionId, 
@@ -65,17 +64,11 @@ export async function POST(request: NextRequest) {
     const unknownDeviceIds = await checkForUnknownDeviceIds(ledgerData);
 
     if (unknownDeviceIds.length > 0) {
-      // Get all existing players for the dropdown
-      const allPlayers = await getAllPlayers();
-      
+      // Return unknown device IDs - player list is pre-loaded on the client via SSR
       return NextResponse.json({
         success: false,
         requiresLinking: true,
         unknownDeviceIds: unknownDeviceIds,
-        existingPlayers: allPlayers.map(p => ({
-          id: p.id,
-          name: p.player_name
-        })),
         message: 'Some device IDs need to be linked to players'
       });
     }
