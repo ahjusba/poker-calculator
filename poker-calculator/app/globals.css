@@ -6,9 +6,11 @@
   --color-poker-coral: #ff6f59;
   --color-poker-sage: #b2b09b;
   --color-poker-watermelon: #ef3054;
-  
-  /* Background pattern opacity - adjust this value to change card suit visibility (0.0 to 1.0) */
-  --bg-pattern-opacity: 0.1;
+
+  /* Background pattern settings */
+  --bg-pattern-opacity: 0.07;
+  --bg-pattern-tile: 60px;
+  /* Total tile size: (20 + 10) * 2 */
 }
 
 @layer base {
@@ -16,8 +18,8 @@
     @apply bg-poker-dark-green text-white min-h-screen;
     position: relative;
   }
-  
-  /* Card suit background pattern - change --bg-pattern-opacity in @theme to adjust visibility */
+
+  /* Card suit background pattern - change variables in @theme to adjust */
   body::before {
     content: '';
     position: fixed;
@@ -25,10 +27,34 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-image: 
-      url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='5' y='22' font-size='24' fill='white' opacity='1'%3E♠%3C/text%3E%3Ctext x='35' y='22' font-size='24' fill='white' opacity='1'%3E♥%3C/text%3E%3Ctext x='5' y='52' font-size='24' fill='white' opacity='1'%3E♣%3C/text%3E%3Ctext x='35' y='52' font-size='24' fill='white' opacity='1'%3E♦%3C/text%3E%3C/svg%3E");
+    /*Path Data: The d attribute contains the shape coordinates (copied from your original SVG files but scaled down to fit 20×20px)
+    <svg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'>
+
+    <!-- SPADE at position (0, 0) -->
+    <g transform='translate(0,0)'>
+      <path d='M19.375 10.293c0-4.575...' fill='white'/>
+    </g>
+    
+    <!-- HEART at position (30, 0) -->
+    <g transform='translate(30,0)'>
+      <path d='M14.395.625c-1.959...' fill='white'/>
+    </g>
+    
+    <!-- CLUB at position (0, 30) -->
+    <g transform='translate(0,30)'>
+      <path d='M14.688 5.898c-.014...' fill='white'/>
+    </g>
+    
+    <!-- DIAMOND at position (30, 30) -->
+    <g transform='translate(30,30)'>
+      <path d='M19.375 10L10 19.375...' fill='white'/>
+    </g>
+    
+  </svg>
+    */
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg transform='translate(0,0)'%3E%3Cpath d='M19.375 10.293c0-4.575-9.375-9.688-9.375-9.688S.625 5.718.625 10.293c0 2.679 2.258 4.981 4.981 4.981c1.31 0 2.477-.505 3.345-1.326l-.122 1.033c-.157 1.121-.935 2.147-2.051 2.344l-1.465.293V19h9.375v-1.758l-1.466-.293c-1.115-.196-1.893-1.222-2.051-2.344l-.121-1.033c.867.821 2.033 1.326 3.344 1.326c2.723-.001 4.981-2.302 4.981-4.981z' fill='white'/%3E%3C/g%3E%3Cg transform='translate(30,0)'%3E%3Cpath d='M14.395.625c-1.959 0-3.598 1.124-4.395 2.753C9.204 1.749 7.564.625 5.605.625C3.226.625.625 3.175.625 5.605c0 4.521 9.376 13.77 9.376 13.77s9.375-9.249 9.375-13.77C19.376 3.175 16.774.625 14.395.625z' fill='white'/%3E%3C/g%3E%3Cg transform='translate(0,30)'%3E%3Cpath d='M14.688 5.898c-.014 0-.027.003-.041.003c.024-.193.041-.389.041-.589c0-2.589-2.098-4.687-4.688-4.687C7.411.625 5.312 2.723 5.312 5.312c0 .2.017.395.041.589c-.014 0-.027-.003-.041-.003C2.723 5.898.625 7.996.625 10.585s2.098 4.688 4.688 4.688c1.502 0 2.836-.71 3.694-1.809l-.178 1.516c-.158 1.121-.936 2.148-2.051 2.344l-1.466.293V19h9.375v-1.758l-1.465-.293c-1.116-.196-1.895-1.222-2.052-2.344l-.178-1.516c.857 1.1 2.192 1.809 3.695 1.809c2.589 0 4.688-2.099 4.688-4.688s-2.099-4.687-4.687-4.687' fill='white'/%3E%3C/g%3E%3Cg transform='translate(30,30)'%3E%3Cpath d='M19.375 10L10 19.375L.626 10l9.375-9.375z' fill='white'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: var(--bg-pattern-tile) var(--bg-pattern-tile);
     background-repeat: repeat;
-    background-size: 60px 60px;
     opacity: var(--bg-pattern-opacity);
     pointer-events: none;
     z-index: -1;
@@ -37,25 +63,19 @@
 
 @layer components {
   .btn-primary {
-    @apply px-4 py-2 md:px-6 md:py-3 bg-poker-light-green text-white font-semibold rounded-lg 
-           hover:bg-poker-light-green/90 disabled:bg-gray-600 disabled:cursor-not-allowed 
-           transition-all shadow-lg text-sm md:text-base;
+    @apply px-4 py-2 md:px-6 md:py-3 bg-poker-light-green text-white font-semibold rounded-lg hover:bg-poker-light-green/90 disabled:bg-gray-600 disabled:cursor-not-allowed transition-all shadow-lg text-sm md:text-base;
   }
-  
+
   .btn-secondary {
-    @apply px-4 py-2 md:px-6 md:py-3 bg-poker-coral text-white font-semibold rounded-lg 
-           hover:bg-poker-coral/90 transition-all shadow-lg text-sm md:text-base;
+    @apply px-4 py-2 md:px-6 md:py-3 bg-poker-coral text-white font-semibold rounded-lg hover:bg-poker-coral/90 transition-all shadow-lg text-sm md:text-base;
   }
 
   .btn-accent {
-    @apply px-4 py-2 md:px-6 md:py-3 bg-poker-watermelon text-white font-semibold rounded-lg 
-           hover:bg-poker-watermelon/90 transition-all shadow-lg text-sm md:text-base;
+    @apply px-4 py-2 md:px-6 md:py-3 bg-poker-watermelon text-white font-semibold rounded-lg hover:bg-poker-watermelon/90 transition-all shadow-lg text-sm md:text-base;
   }
 
   .input-field {
-    @apply w-full px-3 py-2 md:px-4 md:py-3 bg-white/10 border-2 border-poker-sage/30 rounded-lg 
-           text-white placeholder-poker-sage focus:border-poker-light-green 
-           focus:ring-2 focus:ring-poker-light-green/20 transition-all outline-none text-sm md:text-base;
+    @apply w-full px-3 py-2 md:px-4 md:py-3 bg-white/10 border-2 border-poker-sage/30 rounded-lg text-white placeholder-poker-sage focus:border-poker-light-green focus:ring-2 focus:ring-poker-light-green/20 transition-all outline-none text-sm md:text-base;
   }
 
   .card {
