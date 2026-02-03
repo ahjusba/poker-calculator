@@ -1,6 +1,8 @@
 import { getPlayerByDeviceId, addNicknameToPlayer } from '@/lib/players';
 import { createSession, createSessionParticipant } from '@/lib/sessions';
 
+export const PAYOUT_HEADER = 'Payout by Perkins:';
+
 export interface PlayerInfo {
   names: string[];
   id: string;
@@ -106,32 +108,46 @@ export async function processLedger(sessionId: string, url: string, ledgerData: 
 }
 
 /**
- * Calculates optimal payout transactions to settle debts
+ * Aggregates ledger data by actual players (combining multiple device IDs per player)
  * @param ledgerData - The ledger data from PokerNow API
- * @returns Formatted payout string with transactions
+ * @returns Array of player balances with aggregated net amounts
  */
-export async function calculatePayout(ledgerData: LedgerData): Promise<string> {
-  // Create array of players with their net amounts and names
-  interface PlayerBalance {
-    name: string;
-    net: number; // in cents
-  }
-
-  const playerBalances: PlayerBalance[] = [];
+export async function aggregatePlayerBalances(ledgerData: LedgerData): Promise<Array<{ name: string; net: number }>> {
+  // Map to aggregate by player ID
+  const playerBalanceMap = new Map<number, { name: string; net: number }>();
 
   for (const [deviceId, playerInfo] of Object.entries(ledgerData.playersInfos)) {
-    // Get the actual player name from the database
+    // Get the actual player from the database
     const player = await getPlayerByDeviceId(deviceId);
     
-    // Use the actual player name, fallback to nickname if player not found
-    const name = player ? player.player_name : (playerInfo.names[0] || 'Unknown');
-    
-    playerBalances.push({
-      name: name,
-      net: playerInfo.net
-    });
+    if (!player) {
+      // This shouldn't happen since we check before processing, but handle gracefully
+      console.error(`Device ID ${deviceId} not found during payout calculation`);
+      continue;
+    }
+
+    // Aggregate net amount for this player
+    if (playerBalanceMap.has(player.id)) {
+      const existing = playerBalanceMap.get(player.id)!;
+      existing.net += playerInfo.net;
+    } else {
+      playerBalanceMap.set(player.id, {
+        name: player.player_name,
+        net: playerInfo.net
+      });
+    }
   }
 
+  // Convert map to array
+  return Array.from(playerBalanceMap.values());
+}
+
+/**
+ * Calculates optimal payout transactions from player balances
+ * @param playerBalances - Array of players with their net amounts (in cents)
+ * @returns Formatted payout string with transactions
+ */
+function calculatePayoutTransactions(playerBalances: Array<{ name: string; net: number }>): string {
   // Separate into losers (negative net) and winners (positive net)
   const losers = playerBalances
     .filter(p => p.net < 0)
@@ -145,7 +161,7 @@ export async function calculatePayout(ledgerData: LedgerData): Promise<string> {
 
   // Calculate transactions
   const transactions: string[] = [];
-  transactions.push('Payouts powered by Perkins-App:');
+  transactions.push(PAYOUT_HEADER);
 
   // Create copies to work with
   const losersCopy = losers.map(l => ({ ...l }));
@@ -182,4 +198,17 @@ export async function calculatePayout(ledgerData: LedgerData): Promise<string> {
 
   // Join transactions with newline
   return transactions.join('\n');
+}
+
+/**
+ * Calculates optimal payout transactions to settle debts
+ * @param ledgerData - The ledger data from PokerNow API
+ * @returns Formatted payout string with transactions
+ */
+export async function calculatePayout(ledgerData: LedgerData): Promise<string> {
+  // Step 1: Aggregate balances by actual players
+  const playerBalances = await aggregatePlayerBalances(ledgerData);
+
+  // Step 2: Calculate payout transactions
+  return calculatePayoutTransactions(playerBalances);
 }

@@ -6,15 +6,32 @@
   --color-poker-coral: #ff6f59;
   --color-poker-sage: #b2b09b;
   --color-poker-watermelon: #ef3054;
+  
+  /* Background pattern opacity - adjust this value to change card suit visibility (0.0 to 1.0) */
+  --bg-pattern-opacity: 0.1;
 }
 
 @layer base {
   body {
     @apply bg-poker-dark-green text-white min-h-screen;
+    position: relative;
+  }
+  
+  /* Card suit background pattern - change --bg-pattern-opacity in @theme to adjust visibility */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     background-image: 
-      url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='5' y='22' font-size='24' fill='white' opacity='0.03'%3E♠%3C/text%3E%3Ctext x='35' y='22' font-size='24' fill='white' opacity='0.03'%3E♥%3C/text%3E%3Ctext x='5' y='52' font-size='24' fill='white' opacity='0.03'%3E♣%3C/text%3E%3Ctext x='35' y='52' font-size='24' fill='white' opacity='0.03'%3E♦%3C/text%3E%3C/svg%3E");
+      url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='5' y='22' font-size='24' fill='white' opacity='1'%3E♠%3C/text%3E%3Ctext x='35' y='22' font-size='24' fill='white' opacity='1'%3E♥%3C/text%3E%3Ctext x='5' y='52' font-size='24' fill='white' opacity='1'%3E♣%3C/text%3E%3Ctext x='35' y='52' font-size='24' fill='white' opacity='1'%3E♦%3C/text%3E%3C/svg%3E");
     background-repeat: repeat;
     background-size: 60px 60px;
+    opacity: var(--bg-pattern-opacity);
+    pointer-events: none;
+    z-index: -1;
   }
 }
 

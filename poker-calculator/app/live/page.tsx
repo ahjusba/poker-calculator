@@ -15,18 +15,20 @@ export default function LiveSessionPage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [payoutStrings, setPayoutStrings] = useState<string[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
-
+  
   useEffect(() => {
     // Load players and history from local storage when the component mounts
     const storedPlayers = localStorage.getItem('live-players');
     const storedHistory = localStorage.getItem('live-history');
 
     if (storedPlayers) {
-      setPlayers(JSON.parse(storedPlayers));
+      //React doesn't like setting state inside useEffect due to performance reasons
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      setPlayers(JSON.parse(storedPlayers) as Player[]);
     }
 
     if (storedHistory) {
-      setHistory(JSON.parse(storedHistory));
+      setHistory(JSON.parse(storedHistory) as Player[][]);
     }
     
     setIsLoaded(true);
@@ -131,7 +133,7 @@ export default function LiveSessionPage() {
     }
 
     const payoutStrings: string[] = [];
-
+    payoutStrings.push('Live Payout by Perkins:');
     for (const loser of losers) {
       let remainingDebt = Math.abs(loser.net);
 

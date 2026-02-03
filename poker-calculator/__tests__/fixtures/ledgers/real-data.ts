@@ -175,3 +175,87 @@ export const sessions_data = [
     "gameHasRake": false
   }
 ]
+
+/*
+*/
+
+export const payout_data = [
+  {
+    "buyInTotal": 14000,
+    "inGameTotal": 1824,
+    "buyOutTotal": 12176,
+    "playersInfos": {
+      "7C7WggNp1M": {
+        "names": [
+          "Lauri P."
+        ],
+        "id": "7C7WggNp1M",
+        "buyInSum": 2000,
+        "buyOutSum": 2033,
+        "inGame": 0,
+        "net": 33
+      },
+      "nDCo0CjA_m": {
+        "names": [
+          "Perkins"
+        ],
+        "id": "nDCo0CjA_m",
+        "buyInSum": 2000,
+        "buyOutSum": 0,
+        "inGame": 0,
+        "net": -2000
+      },
+      "0InsxVr9xo": {
+        "names": [
+          "Haamukone"
+        ],
+        "id": "0InsxVr9xo",
+        "buyInSum": 2000,
+        "buyOutSum": 0,
+        "inGame": 0,
+        "net": -2000
+      },
+      "zkGVJb7I5U": {
+        "names": [
+          "Patzer"
+        ],
+        "id": "zkGVJb7I5U",
+        "buyInSum": 2000,
+        "buyOutSum": 0,
+        "inGame": 1824,
+        "net": -176
+      },
+      "lqP155LHFZ": {
+        "names": [
+          "Kake"
+        ],
+        "id": "lqP155LHFZ",
+        "buyInSum": 2000,
+        "buyOutSum": 4011,
+        "inGame": 0,
+        "net": 2011
+      },
+      "FQl3QSL8H6": {
+        "names": [
+          "jaakko"
+        ],
+        "id": "FQl3QSL8H6",
+        "buyInSum": 2000,
+        "buyOutSum": 6132,
+        "inGame": 0,
+        "net": 4132
+      },
+      "HuFTNJLI6e": {
+        "names": [
+          "Haamu"
+        ],
+        "id": "HuFTNJLI6e",
+        "buyInSum": 2000,
+        "buyOutSum": 0,
+        "inGame": 0,
+        "net": -2000
+      }
+    },
+    "gameHasRake": false
+  }
+]

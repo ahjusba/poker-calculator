@@ -10,3 +10,5 @@ https://www.pokernow.com/games/pglOshdGzQ7spaoP9UfX2_rYD
 
 https://www.pokernow.com/games/pglBZDKPjVI2i26dWRV-OskEh
 https://www.pokernow.com/games/pglaZEnctN5z1AoH9ioBPazdZ
+
+https://www.pokernow.com/games/pglgKB8IxgKrmIxaQMU3Rfhna/
