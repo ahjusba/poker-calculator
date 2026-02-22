@@ -80,8 +80,8 @@ export async function POST(request: NextRequest) {
     // Calculate and format payout string
     const payoutString = await calculatePayout(ledgerData);
 
-    // Revalidate the leaderboard page to show updated data
-    revalidatePath('/leaderboard');
+    // Revalidate the leaderboard page to show updated data for ALL clients
+    revalidatePath('/leaderboard', 'page');
 
     return NextResponse.json({
       success: true,

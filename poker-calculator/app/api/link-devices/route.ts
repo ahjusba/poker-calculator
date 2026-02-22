@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Revalidate the leaderboard page since device linking may affect future ledger submissions
-    revalidatePath('/leaderboard');
+    revalidatePath('/leaderboard', 'page');
 
     return NextResponse.json({
       success: true,
