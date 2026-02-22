@@ -259,3 +259,106 @@ export const payout_data = [
     "gameHasRake": false
   }
 ]
+
+export const bugged_data_1 = [
+  {
+    "buyInTotal": 105456,
+    "inGameTotal": 30582,
+    "buyOutTotal": 74874,
+    "playersInfos": {
+      "FQl3QSL8H6": {
+        "names": [
+          "jaakko",
+          "jaakko",
+          "jaakko",
+          "jaakko"
+        ],
+        "id": "FQl3QSL8H6",
+        "buyInSum": 44456,
+        "buyOutSum": 24456,
+        "inGame": 23145,
+        "net": 3145
+      },
+      "ymD7xdl9mQ": {
+        "names": [
+          "Kola-Allu",
+          "Kola-Allu",
+          "Kola-Allu",
+          "Kola-Allu",
+          "Kola-Allu",
+          "Kola-Allu"
+        ],
+        "id": "ymD7xdl9mQ",
+        "buyInSum": 12000,
+        "buyOutSum": 10688,
+        "inGame": 0,
+        "net": -1312
+      },
+      "jZIpJ2hNYE": {
+        "names": [
+          "Kake"
+        ],
+        "id": "jZIpJ2hNYE",
+        "buyInSum": 2000,
+        "buyOutSum": 2007,
+        "inGame": 0,
+        "net": 7
+      },
+      "nDCo0CjA_m": {
+        "names": [
+          "Perkins",
+          "Perkins",
+          "Perkins",
+          "Perkins"
+        ],
+        "id": "nDCo0CjA_m",
+        "buyInSum": 16000,
+        "buyOutSum": 0,
+        "inGame": 0,
+        "net": -16000
+      },
+      "0w9M5q7tsf": {
+        "names": [
+          "Joel"
+        ],
+        "id": "0w9M5q7tsf",
+        "buyInSum": 2000,
+        "buyOutSum": 3451,
+        "inGame": 0,
+        "net": 1451
+      },
+      "iu909D4uFV": {
+        "names": [
+          "lasseuusiks",
+          "Lasse"
+        ],
+        "id": "iu909D4uFV",
+        "buyInSum": 15000,
+        "buyOutSum": 0,
+        "inGame": 7437,
+        "net": -7563
+      },
+      "7C7WggNp1M": {
+        "names": [
+          "Lauri P."
+        ],
+        "id": "7C7WggNp1M",
+        "buyInSum": 12000,
+        "buyOutSum": 20073,
+        "inGame": 0,
+        "net": 8073
+      },
+      "kzQ_mFJHzj": {
+        "names": [
+          "Mikko"
+        ],
+        "id": "kzQ_mFJHzj",
+        "buyInSum": 2000,
+        "buyOutSum": 14199,
+        "inGame": 0,
+        "net": 12199
+      }
+    },
+    "gameHasRake": false
+  }
+]

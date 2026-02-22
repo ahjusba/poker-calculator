@@ -9,7 +9,7 @@ import {
 import type { LedgerData } from '@/lib/ledger-utils';
 import { createPlayer, linkDeviceToPlayer } from '@/lib/players';
 import { sessionExists, getSessionById, getSessionParticipants } from '@/lib/sessions';
-import { sessions_data, payout_data } from '../fixtures/ledgers/real-data';
+import { sessions_data, payout_data, bugged_data_1 } from '../fixtures/ledgers/real-data';
 import { cleanDatabase } from '../helpers/db-setup';
 
 /**
@@ -631,6 +631,132 @@ describe('Ledger Utils - Integration Tests', () => {
 
       // Should only have participants for linked devices
       expect(participants.length).toBe(linkedCount);
+    });
+  });
+
+  describe('calculatePayout - Bugged Data Test', () => {
+    it('should generate correct payout plan for bugged_data_1 with large in-game amounts', async () => {
+      const ledgerData = bugged_data_1[0] as unknown as LedgerData;
+
+      // Create players and link devices
+      const jaakko = await createPlayer('Jaakko');
+      await linkDeviceToPlayer('FQl3QSL8H6', jaakko.id);
+
+      const kolaAllu = await createPlayer('Kola-Allu');
+      await linkDeviceToPlayer('ymD7xdl9mQ', kolaAllu.id);
+
+      const kake = await createPlayer('Kake');
+      await linkDeviceToPlayer('jZIpJ2hNYE', kake.id);
+
+      const perkins = await createPlayer('Perkins');
+      await linkDeviceToPlayer('nDCo0CjA_m', perkins.id);
+
+      const joel = await createPlayer('Joel');
+      await linkDeviceToPlayer('0w9M5q7tsf', joel.id);
+
+      const lasse = await createPlayer('Lasse');
+      await linkDeviceToPlayer('iu909D4uFV', lasse.id);
+
+      const lauriP = await createPlayer('Lauri P.');
+      await linkDeviceToPlayer('7C7WggNp1M', lauriP.id);
+
+      const mikko = await createPlayer('Mikko');
+      await linkDeviceToPlayer('kzQ_mFJHzj', mikko.id);
+
+      // Calculate payout
+      const payoutString = await calculatePayout(ledgerData);
+      console.log(payoutString); // Log the payout for debugging
+      // Verify payout string structure
+      expect(payoutString).toBeTruthy();
+      expect(typeof payoutString).toBe('string');
+      expect(payoutString).toContain(PAYOUT_HEADER);
+
+      const lines = payoutString.trim().split('\n');
+      expect(lines[0]).toBe(PAYOUT_HEADER);
+
+      // Verify format of transaction lines
+      const payoutRegex = /^.+ \d+\.\d{2}€ → .+$/;
+      const transactionLines = lines.slice(1);
+      transactionLines.forEach(line => {
+        expect(line).toMatch(payoutRegex);
+      });
+
+      // Verify the net amounts are correctly used:
+      // Winners (positive net): Jaakko: 3145, Lauri P.: 8073, Mikko: 12199, Joel: 1451, Kake: 7
+      // Losers (negative net): Kola-Allu: -1312, Perkins: -16000, Lasse: -7563
+      
+      // Calculate total winners and losers
+      const expectedWinners = 3145 + 8073 + 12199 + 1451 + 7; // 24875 cents
+      const expectedLosers = Math.abs(-1312 - 16000 - 7563); // 24875 cents
+
+      // Verify balances are equal (winners = losers)
+      expect(expectedWinners).toBe(expectedLosers);
+
+      // Verify specific players appear in the payout
+      expect(payoutString).toContain('Perkins'); // Biggest loser
+      expect(payoutString).toContain('Mikko'); // Biggest winner
+      expect(payoutString).toContain('Lasse'); // Second biggest loser
+      expect(payoutString).toContain('Lauri P.'); // Second biggest winner
+
+      // Verify number of transactions
+      // Minimum transactions = max(winners, losers) - 1 = max(5, 3) - 1 = 4
+      // Maximum transactions = winners + losers - 1 = 5 + 3 - 1 = 7
+      expect(transactionLines.length).toBeGreaterThanOrEqual(3);
+      expect(transactionLines.length).toBeLessThanOrEqual(7);
+    });
+
+    it('should correctly aggregate player balances including in-game amounts from bugged_data_1', async () => {
+      const ledgerData = bugged_data_1[0] as unknown as LedgerData;
+
+      // Create players and link devices
+      const jaakko = await createPlayer('Jaakko');
+      await linkDeviceToPlayer('FQl3QSL8H6', jaakko.id);
+
+      const lasse = await createPlayer('Lasse');
+      await linkDeviceToPlayer('iu909D4uFV', lasse.id);
+
+      const lauriP = await createPlayer('Lauri P.');
+      await linkDeviceToPlayer('7C7WggNp1M', lauriP.id);
+
+      const perkins = await createPlayer('Perkins');
+      await linkDeviceToPlayer('nDCo0CjA_m', perkins.id);
+
+      const mikko = await createPlayer('Mikko');
+      await linkDeviceToPlayer('kzQ_mFJHzj', mikko.id);
+
+      const kolaAllu = await createPlayer('Kola-Allu');
+      await linkDeviceToPlayer('ymD7xdl9mQ', kolaAllu.id);
+
+      const joel = await createPlayer('Joel');
+      await linkDeviceToPlayer('0w9M5q7tsf', joel.id);
+
+      const kake = await createPlayer('Kake');
+      await linkDeviceToPlayer('jZIpJ2hNYE', kake.id);
+
+      // Aggregate player balances
+      const playerBalances = await aggregatePlayerBalances(ledgerData);
+
+      // Sort by net amount descending for easier verification
+      const sortedBalances = playerBalances.sort((a, b) => b.net - a.net);
+
+      // Verify all 8 players are included
+      expect(sortedBalances).toHaveLength(8);
+
+      // Verify the expected balances (from bugged_data_1)
+      const balanceMap = new Map(sortedBalances.map(b => [b.name, b.net]));
+      
+      expect(balanceMap.get('Jaakko')).toBe(3145);
+      expect(balanceMap.get('Kola-Allu')).toBe(-1312);
+      expect(balanceMap.get('Kake')).toBe(7);
+      expect(balanceMap.get('Perkins')).toBe(-16000);
+      expect(balanceMap.get('Joel')).toBe(1451);
+      expect(balanceMap.get('Lasse')).toBe(-7563);
+      expect(balanceMap.get('Lauri P.')).toBe(8073);
+      expect(balanceMap.get('Mikko')).toBe(12199);
+
+      // Verify total net is zero (sum of all balances)
+      const totalNet = sortedBalances.reduce((sum, balance) => sum + balance.net, 0);
+      expect(totalNet).toBe(0);
     });
   });
 });
