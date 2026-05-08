@@ -6,6 +6,8 @@ import { RefreshButton } from '@/components/leaderboard/refresh-button';
 // This caches the page for all clients until revalidatePath is called
 export const revalidate = false; // Only revalidate when explicitly triggered
 
+const MAX_LEADERBOARD_PLAYERS = 10;
+
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('fi-FI', {
     style: 'currency',
@@ -19,8 +21,8 @@ export default async function LeaderboardPage() {
   // Fetch data directly on the server
   const allPlayers = await getAllPlayerStats();
   
-  // Filter to only show players with at least 1 session
-  const players = allPlayers.filter(player => player.sessions > 0);
+  // Filter to only show players with at least 1 session, limited to top N
+  const players = allPlayers.filter(player => player.sessions > 0).slice(0, MAX_LEADERBOARD_PLAYERS);
 
   return (
     <PageContainer title="🏆 Leaderboard" maxWidth="2xl">
