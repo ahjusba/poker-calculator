@@ -13,6 +13,7 @@ export function BurgerMenu() {
   const menuItems = [
     { href: '/', label: 'Submit', icon: '🏠' },
     { href: '/leaderboard', label: 'Leaderboard', icon: '🏆' },
+    { href: '/holdem', label: "Hold'em", icon: '🃏' },
     { href: '/add-player', label: 'Add Player', icon: '➕' },
     { href: '/stats', label: 'Stats', icon: '📊' },
     { href: '/live', label: 'Live Session', icon: '🎮' },
