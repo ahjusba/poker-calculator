@@ -85,7 +85,7 @@ describe('Stats Utils - Unit Tests', () => {
       expect(data[1][key]).toBe(80);
     });
 
-    it('is null before a player first plays and after they last play (cutoff)', () => {
+    it('is null before a player first plays but trails after their last game', () => {
       const rows: PlayerSessionResult[] = [
         // Alice plays at t0 and t2; Bob plays only at t1.
         row(1, 'Alice', '2026-01-01', 20),
@@ -105,9 +105,9 @@ describe('Stats Utils - Unit Tests', () => {
       expect(data[1][alice]).toBe(20);
       expect(data[1][bob]).toBe(-10);
 
-      // t2: Alice active (25), Bob already finished -> null (cutoff, no flat line)
+      // t2: Alice active (25), Bob already finished -> trails at -10 (flat line)
       expect(data[2][alice]).toBe(25);
-      expect(data[2][bob]).toBeNull();
+      expect(data[2][bob]).toBe(-10);
     });
 
     it('supports negative cumulative values', () => {

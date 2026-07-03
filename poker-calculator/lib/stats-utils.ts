@@ -95,10 +95,9 @@ export function getTopPlayerIds(players: PlayerMeta[], n: number): number[] {
  *
  * For each unique session timestamp, each player's value is their cumulative
  * net winnings up to and including that time. A player's value is `null` before
- * their first game and after their last game, so their line cuts off cleanly
- * instead of extending as a flat line to the edges of the chart. Between a
- * player's own games the cumulative value carries forward (a flat segment),
- * which produces only leading/trailing nulls — safe for `connectNulls={false}`.
+ * their first game (so their line only starts once they have played). After a
+ * player's last game the cumulative value carries forward (a flat trailing
+ * line) to the end of the timeline.
  *
  * Cumulative values are always computed from all-time history; an optional date
  * range only clips which timestamps are shown, so a line entering the visible
@@ -110,24 +109,21 @@ export function buildChartData(
 ): ChartPoint[] {
   if (rows.length === 0) return [];
 
-  // Per-player first/last game time (all-time) for null clipping.
-  const bounds = new Map<number, { first: number; last: number }>();
+  // Per-player first game time (all-time) for leading-null clipping.
+  const firstSeen = new Map<number, number>();
   const timeSet = new Set<number>();
 
   for (const row of rows) {
     const t = new Date(row.created_at).getTime();
     timeSet.add(t);
-    const existing = bounds.get(row.player_id);
-    if (existing) {
-      existing.first = Math.min(existing.first, t);
-      existing.last = Math.max(existing.last, t);
-    } else {
-      bounds.set(row.player_id, { first: t, last: t });
+    const existing = firstSeen.get(row.player_id);
+    if (existing === undefined || t < existing) {
+      firstSeen.set(row.player_id, t);
     }
   }
 
   const times = Array.from(timeSet).sort((a, b) => a - b);
-  const playerIds = Array.from(bounds.keys());
+  const playerIds = Array.from(firstSeen.keys());
 
   // Running cumulative per player as we sweep timestamps in order.
   const cumulative = new Map<number, number>();
@@ -165,8 +161,8 @@ export function buildChartData(
 
     const point: ChartPoint = { time: t };
     for (const id of playerIds) {
-      const b = bounds.get(id)!;
-      point[playerKey(id)] = t >= b.first && t <= b.last ? cumulative.get(id)! : null;
+      // Null before the player's first game; carries forward afterwards.
+      point[playerKey(id)] = t >= firstSeen.get(id)! ? cumulative.get(id)! : null;
     }
     points.push(point);
   }

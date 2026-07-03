@@ -23,7 +23,9 @@ interface NetWinningsChartProps {
   rows: PlayerSessionResult[];
 }
 
-const TOP_N = 5;
+const TOP_VISIBLE = 10;
+const TOP_SELECTED = 5;
+const UNLOCK_PASSWORD = 'kakkosseiska';
 
 const euroCompact = new Intl.NumberFormat('fi-FI', {
   style: 'currency',
@@ -77,9 +79,10 @@ interface ChartTooltipProps {
   label?: number;
   payload?: readonly TooltipEntry[];
   playersById: Map<string, PlayerMeta>;
+  isSession?: boolean;
 }
 
-function CustomTooltip({ active, payload, label, playersById }: ChartTooltipProps) {
+function CustomTooltip({ active, payload, label, playersById, isSession }: ChartTooltipProps) {
   if (!active || !payload || payload.length === 0) return null;
 
   const rows = payload
@@ -91,7 +94,7 @@ function CustomTooltip({ active, payload, label, playersById }: ChartTooltipProp
   return (
     <div className="rounded-lg border border-white/20 bg-poker-dark-green/95 px-3 py-2 text-xs shadow-xl">
       <div className="mb-1 font-semibold text-poker-sage">
-        {formatFullDate(label as number)}
+        {isSession ? `Session #${label}` : formatFullDate(label as number)}
       </div>
       <div className="space-y-1">
         {rows.map(entry => {
@@ -116,7 +119,7 @@ function CustomTooltip({ active, payload, label, playersById }: ChartTooltipProp
 
 export function NetWinningsChart({ rows }: NetWinningsChartProps) {
   const players = useMemo(() => getPlayerMeta(rows), [rows]);
-  const topIds = useMemo(() => getTopPlayerIds(players, TOP_N), [players]);
+  const topIds = useMemo(() => getTopPlayerIds(players, TOP_SELECTED), [players]);
 
   const bounds = useMemo(() => {
     let min = Infinity;
@@ -132,9 +135,19 @@ export function NetWinningsChart({ rows }: NetWinningsChartProps) {
     };
   }, [rows]);
 
+  // Full (unfiltered) timeline — used for the session-count mode and totals.
+  const fullData = useMemo(() => buildChartData(rows), [rows]);
+  const totalSessions = fullData.length;
+
   const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set(topIds));
   const [startDate, setStartDate] = useState<string>(() => toDateInputValue(bounds.min));
   const [endDate, setEndDate] = useState<string>(() => toDateInputValue(bounds.max));
+  const [xMode, setXMode] = useState<'time' | 'session'>('time');
+  const [lastN, setLastN] = useState<number | ''>('');
+  const [unlocked, setUnlocked] = useState(false);
+  const [secret, setSecret] = useState('');
+
+  const isSession = xMode === 'session';
 
   const range = useMemo(() => {
     const start = startDate ? new Date(`${startDate}T00:00:00`).getTime() : null;
@@ -142,7 +155,18 @@ export function NetWinningsChart({ rows }: NetWinningsChartProps) {
     return { start, end };
   }, [startDate, endDate]);
 
-  const chartData = useMemo(() => buildChartData(rows, range), [rows, range]);
+  const timeData = useMemo(() => buildChartData(rows, range), [rows, range]);
+
+  // Session-count data: the last N sessions of the full timeline, numbered.
+  const sessionData = useMemo(() => {
+    const n = lastN === '' ? totalSessions : Math.max(1, Math.min(lastN, totalSessions));
+    return fullData
+      .map((point, i) => ({ ...point, sessionNo: i + 1 }))
+      .slice(totalSessions - n);
+  }, [fullData, lastN, totalSessions]);
+
+  const chartData = isSession ? sessionData : timeData;
+  const xKey = isSession ? 'sessionNo' : 'time';
 
   const playersByKey = useMemo(() => {
     const map = new Map<string, PlayerMeta>();
@@ -150,14 +174,17 @@ export function NetWinningsChart({ rows }: NetWinningsChartProps) {
     return map;
   }, [players]);
 
+  // Only the top N players are available unless unlocked with the password.
+  const visiblePlayers = unlocked ? players : players.slice(0, TOP_VISIBLE);
   const selectedPlayers = players.filter(player => selectedIds.has(player.id));
 
   const xTicks = useMemo(() => {
     if (chartData.length === 0) return [];
-    const first = chartData[0].time;
-    const last = chartData[chartData.length - 1].time;
+    const key = isSession ? 'sessionNo' : 'time';
+    const first = (chartData[0] as Record<string, number>)[key];
+    const last = (chartData[chartData.length - 1] as Record<string, number>)[key];
     return first === last ? [first] : [first, last];
-  }, [chartData]);
+  }, [chartData, isSession]);
 
   const togglePlayer = (id: number) => {
     setSelectedIds(prev => {
@@ -169,7 +196,14 @@ export function NetWinningsChart({ rows }: NetWinningsChartProps) {
   };
 
   const toggleAll = (on: boolean) => {
-    setSelectedIds(on ? new Set(players.map(p => p.id)) : new Set());
+    setSelectedIds(on ? new Set(visiblePlayers.map(p => p.id)) : new Set());
+  };
+
+  const handleSecret = (value: string) => {
+    setSecret(value);
+    if (value.trim().toLowerCase() === UNLOCK_PASSWORD) {
+      setUnlocked(true);
+    }
   };
 
   if (rows.length === 0) {
@@ -199,7 +233,7 @@ export function NetWinningsChart({ rows }: NetWinningsChartProps) {
 
         {/* Chart (landscape only) */}
         <div className="hidden landscape:block">
-          {selectedPlayers.length === 0 ? (
+          {selectedPlayers.length === 0 || chartData.length === 0 ? (
             <div className="flex h-[360px] items-center justify-center text-center text-poker-sage">
               No players selected. Toggle players on below to see the chart.
             </div>
@@ -211,12 +245,15 @@ export function NetWinningsChart({ rows }: NetWinningsChartProps) {
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
                 <XAxis
-                  dataKey="time"
+                  dataKey={xKey}
                   type="number"
-                  scale="time"
+                  scale={isSession ? 'linear' : 'time'}
                   domain={['dataMin', 'dataMax']}
                   ticks={xTicks}
-                  tickFormatter={formatMonth}
+                  allowDecimals={false}
+                  tickFormatter={value =>
+                    isSession ? `#${value}` : formatMonth(value as number)
+                  }
                   stroke="#b2b09b"
                   tick={{ fontSize: 12, fill: '#b2b09b' }}
                 />
@@ -233,6 +270,7 @@ export function NetWinningsChart({ rows }: NetWinningsChartProps) {
                       label={props.label as number | undefined}
                       payload={props.payload as readonly TooltipEntry[] | undefined}
                       playersById={playersByKey}
+                      isSession={isSession}
                     />
                   )}
                   cursor={{ stroke: 'rgba(255,255,255,0.2)', strokeWidth: 1 }}
@@ -240,7 +278,7 @@ export function NetWinningsChart({ rows }: NetWinningsChartProps) {
                 {selectedPlayers.map(player => (
                   <Line
                     key={player.id}
-                    type="monotone"
+                    type="linear"
                     dataKey={playerKey(player.id)}
                     name={player.name}
                     stroke={player.color}
@@ -254,45 +292,6 @@ export function NetWinningsChart({ rows }: NetWinningsChartProps) {
               </LineChart>
             </ResponsiveContainer>
           )}
-        </div>
-      </div>
-
-      {/* Date range */}
-      <div className="card">
-        <h2 className="mb-3 text-lg font-semibold text-poker-light-green">📅 Date range</h2>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-          <label className="flex flex-1 flex-col gap-1 text-sm text-poker-sage">
-            From
-            <input
-              type="date"
-              value={startDate}
-              min={toDateInputValue(bounds.min)}
-              max={endDate || toDateInputValue(bounds.max)}
-              onChange={e => setStartDate(e.target.value)}
-              className="input-field"
-            />
-          </label>
-          <label className="flex flex-1 flex-col gap-1 text-sm text-poker-sage">
-            To
-            <input
-              type="date"
-              value={endDate}
-              min={startDate || toDateInputValue(bounds.min)}
-              max={toDateInputValue(bounds.max)}
-              onChange={e => setEndDate(e.target.value)}
-              className="input-field"
-            />
-          </label>
-          <button
-            type="button"
-            onClick={() => {
-              setStartDate(toDateInputValue(bounds.min));
-              setEndDate(toDateInputValue(bounds.max));
-            }}
-            className="btn-secondary whitespace-nowrap"
-          >
-            Reset range
-          </button>
         </div>
       </div>
 
@@ -310,7 +309,7 @@ export function NetWinningsChart({ rows }: NetWinningsChartProps) {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          {players.map(player => {
+          {visiblePlayers.map(player => {
             const selected = selectedIds.has(player.id);
             return (
               <button
@@ -334,6 +333,113 @@ export function NetWinningsChart({ rows }: NetWinningsChartProps) {
             );
           })}
         </div>
+
+        {/* Secret unlock for all players */}
+        {unlocked ? (
+          <p className="mt-4 text-sm text-poker-light-green">
+            🔓 All {players.length} players unlocked.
+          </p>
+        ) : (
+          <div className="mt-4">
+            <p className="mb-1 text-xs text-poker-sage">
+              Showing the top {Math.min(TOP_VISIBLE, players.length)} players.
+            </p>
+            <input
+              type="password"
+              value={secret}
+              onChange={e => handleSecret(e.target.value)}
+              placeholder="🔒 Password to unlock all players"
+              className="input-field max-w-xs"
+              autoComplete="off"
+            />
+          </div>
+        )}
+      </div>
+
+      {/* X-axis mode + range / session controls (below Players) */}
+      <div className="card">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-semibold text-poker-light-green">📈 X-axis</h2>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setXMode('time')}
+              aria-pressed={!isSession}
+              className={!isSession ? 'btn-primary' : 'btn-secondary opacity-70'}
+            >
+              Time
+            </button>
+            <button
+              type="button"
+              onClick={() => setXMode('session')}
+              aria-pressed={isSession}
+              className={isSession ? 'btn-primary' : 'btn-secondary opacity-70'}
+            >
+              Session count
+            </button>
+          </div>
+        </div>
+
+        {isSession ? (
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <label className="flex flex-1 flex-col gap-1 text-sm text-poker-sage">
+              Show last N sessions (of {totalSessions})
+              <input
+                type="number"
+                min={1}
+                max={totalSessions}
+                value={lastN}
+                placeholder={String(totalSessions)}
+                onChange={e =>
+                  setLastN(e.target.value === '' ? '' : Number(e.target.value))
+                }
+                className="input-field"
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => setLastN('')}
+              className="btn-secondary whitespace-nowrap"
+            >
+              Show all
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <label className="flex flex-1 flex-col gap-1 text-sm text-poker-sage">
+              From
+              <input
+                type="date"
+                value={startDate}
+                min={toDateInputValue(bounds.min)}
+                max={endDate || toDateInputValue(bounds.max)}
+                onChange={e => setStartDate(e.target.value)}
+                className="input-field"
+              />
+            </label>
+            <label className="flex flex-1 flex-col gap-1 text-sm text-poker-sage">
+              To
+              <input
+                type="date"
+                value={endDate}
+                min={startDate || toDateInputValue(bounds.min)}
+                max={toDateInputValue(bounds.max)}
+                onChange={e => setEndDate(e.target.value)}
+                className="input-field"
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => {
+                setStartDate(toDateInputValue(bounds.min));
+                setEndDate(toDateInputValue(bounds.max));
+              }}
+              className="btn-secondary whitespace-nowrap"
+            >
+              Reset range
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
